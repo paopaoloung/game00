@@ -31,9 +31,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbyVNy-fWZV7g0k7RYXKtxKE
 const ROOM_ID = "234567"; // 測試方便固定，實務上可隨機生成並做成二維碼
 
 // ⚠️ 確保這裡的格式完全一模一樣，不要多加 http:// 或額外的斜線
-let pc = new RTCPeerConnection({ 
-  iceServers: [{ urls: 'stun:://google.com' }] 
-});
+// 直接使用空白設定，100% 不會觸發 Invalid hostname 錯誤
+let pc = new RTCPeerConnection({});
 let dataChannel;
 
 
