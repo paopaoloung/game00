@@ -30,8 +30,12 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyVNy-fWZV7g0k7RYXKtxKEHYZj5csvaV2o1ElOWkRJ1c0fr_rDWBqUWXsjfY4cafvW/exec"; 
 const ROOM_ID = "234567"; // 測試方便固定，實務上可隨機生成並做成二維碼
 
-let pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:://google.com' }] });
+// ⚠️ 確保這裡的格式完全一模一樣，不要多加 http:// 或額外的斜線
+let pc = new RTCPeerConnection({ 
+  iceServers: [{ urls: 'stun:://google.com' }] 
+});
 let dataChannel;
+
 
 function log(msg) {
     const div = document.getElementById('log');
