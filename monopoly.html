@@ -55,35 +55,28 @@ async function startAsA() {
     dataChannel = pc.createDataChannel("chat");
     setupDataChannelHooks(dataChannel);
 
-    // 收集網路節點資訊 (ICE)
+    // 建立並設定本地 Offer 描述
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    // 🔥 核心修正：不放在 onicecandidate 裡死等！生成後立即強行上傳到 GAS
+    log("📡 手機 A：立即上傳初始 Offer 到 GAS...");
+    const sdpData = encodeURIComponent(JSON.stringify(pc.localDescription));
+    const uploadUrl = `${GAS_URL}?action=save&roomId=${ROOM_ID}&type=offer&data=${sdpData}`;
+    
+    await fetch(uploadUrl, { method: "GET" });
+    log("⏳ 上傳成功！等待手機 B 回應 (每3秒輪詢一次)...");
+    
+    // 同步收集後續的網路候選人（Trickle ICE 正常運作）
     pc.onicecandidate = async (e) => {
-        if (!e.candidate) { // 當 ICE 收集完畢時
-            log("📡 手機 A：上傳 Offer 到 GAS...");
-            await fetch(GAS_URL, {
-                method: "POST",
-                mode: "no-cors", // 跨網域寫入
-                body: JSON.stringify({ roomId: ROOM_ID, type: "offer", data: JSON.stringify(pc.localDescription) })
-            });
-            log("⏳ 等待手機 B 回應 (每3秒輪詢一次)...");
-            pollForAnswer();
+        if (e.candidate) {
+            // 如果後續還有收集到新的網路資訊，持續補上傳更新
+            const updatedSdp = encodeURIComponent(JSON.stringify(pc.localDescription));
+            await fetch(`${GAS_URL}?action=save&roomId=${ROOM_ID}&type=offer&data=${updatedSdp}`, { method: "GET" });
         }
     };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-}
-
-// 手機 A 輪詢等待 B 的回應
-function pollForAnswer() {
-    const timer = setInterval(async () => {
-        let res = await fetch(`${GAS_URL}?roomId=${ROOM_ID}&type=answer`);
-        let json = await res.json();
-        if (json.data) {
-            clearInterval(timer);
-            log("🔗 手機 A：收到 B 的 Answer，建立 P2P 連線中...");
-            await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(json.data)));
-        }
-    }, 3000);
+    pollForAnswer();
 }
 
 // ================= 手機 B 的操作流程 =================
@@ -106,18 +99,21 @@ async function startAsB() {
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
+    // 🔥 核心修正：生成 Answer 後也是立即強行上傳，不等 onicecandidate 結束
+    log("📡 手機 B：立即上傳初始 Answer 到 GAS...");
+    const sdpDataB = encodeURIComponent(JSON.stringify(pc.localDescription));
+    const uploadUrlB = `${GAS_URL}?action=save&roomId=${ROOM_ID}&type=answer&data=${sdpDataB}`;
+    await fetch(uploadUrlB, { method: "GET" });
+    log("⌛ 手機 B：Answer 已送出，等待連線建立...");
+
     pc.onicecandidate = async (e) => {
-        if (!e.candidate) {
-            log("📡 手機 B：上傳 Answer 到 GAS...");
-            await fetch(GAS_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({ roomId: ROOM_ID, type: "answer", data: JSON.stringify(pc.localDescription) })
-            });
-            log("⌛ 手機 B：Answer 已送出，等待連線建立...");
+        if (e.candidate) {
+            const updatedSdpB = encodeURIComponent(JSON.stringify(pc.localDescription));
+            await fetch(`${GAS_URL}?action=save&roomId=${ROOM_ID}&type=answer&data=${updatedSdpB}`, { method: "GET" });
         }
     };
 }
+
 
 // ================= 傳送訊息 =================
 function sendMessage() {
