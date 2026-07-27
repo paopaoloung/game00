@@ -61,18 +61,18 @@
     <!-- 單位轉換按鈕 -->
     <div class="unit-container">
         <!-- (按鈕1) K單位 -->
-        <button class="btn-unit" onclick="convertUnit(1000)">K單位</button>
+        <button class="btn-unit" onclick="convertUnit(1000)">K(千)</button>
         <!-- (按鈕2) M單位 -->
-        <button class="btn-unit" onclick="convertUnit(1000000)">M單位</button>
+        <button class="btn-unit" onclick="convertUnit(1000000)">M(百萬)</button>
     </div>
     
     <!-- 遊戲功能按鈕 -->
     <!-- (按鈕3) 到終點奬金2M -->
-    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金2M</button>
+    <button class="btn-action" onclick="handleAction('end_prize')">終點奬金 ➕2M</button>
     <!-- (按鈕0) 付租金 -->
-    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金</button>
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 (➖入現金池)</button>
     <!-- (按鈕9) 罸款/買地 -->
-    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地</button>
+    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
 
 <!-- 動態彈出視窗 -->
@@ -116,9 +116,10 @@
             const data = await response.json();
             
             // 將資產值除以 1000000 轉換為 M 單位
-            const formattedCash = parseFloat((Number(data.p_cash) / 1000000).toFixed(4)) + "M";
+            // const formattedCash = parseFloat((Number(data.p_cash) / 1000000).toFixed(4)) + "M";
             
-            p1Text.innerText = `${data.p_name}財產： ${formattedCash}`;
+            // p1Text.innerText = `${data.p_name}財產： ${formattedCash}`;
+            p1Text.innerText = `${data.p_name}財產： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
