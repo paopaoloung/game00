@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大富翁財富計算工具</title>
     <style>
-        /* 網頁基礎樣式 */
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; background-color: #f4f4f9; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .text-display { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }
@@ -16,26 +15,27 @@
         .btn-action { background-color: #FF9800; color: white; }
         .btn-danger { background-color: #f44336; color: white; }
         .unit-container { display: flex; justify-content: space-between; }
+
+/* 🎯 專屬修改：只針對用戶資產值這一行放大並改為橘底白字 */
+#p1-text {
+    font-size: 26px;          /* 只放大這一行的字體（其餘文字不受影響） */
+    font-weight: bold;         /* 粗體字 */
+    color: #ffffff;            /* 字體變為白色 */
+    background-color: #FF9800; /* 底色變為橙色 */
+    padding: 12px;             /* 讓橙色底色向外延伸，形成好看的看板方塊 */
+    border-radius: 6px;        /* 讓底色方塊的邊角帶有一點圓弧 */
+    text-align: center;        /* 讓資產文字在橙色方塊中居中對齊 */
+    margin-bottom: 20px;       /* 與下方的現金池按鈕保持舒適的距離 */
+}
+
+        
+        /* 玩家切換選單樣式 */
         .player-selector { margin-bottom: 15px; padding: 5px; font-size: 14px; width: 100%; }
 
-        /* 專屬樣式：用戶資產值放大、橘底白字 */
-        #p1-text {
-            font-size: 26px;          
-            font-weight: 900;         
-            color: #ffffff;            
-            background-color: #FF9800; 
-            padding: 12px;             
-            border-radius: 6px;        
-            text-align: center;        
-            margin-bottom: 20px;       
-        }
-
         /* 彈出視窗樣式 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); min-width: 250px; }
-        .btn-close { background-color: #008CBA; color: white; width: auto; padding: 10px 20px; margin-bottom: 0; margin-top: 15px; }
-        #modal-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #333; }
-        #modal-msg { font-size: 16px; color: #666; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-close { background-color: #008CBA; color: white; width: auto; padding: 10px 20px; margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -50,7 +50,7 @@
     </select>
 
     <!-- (文字1) 資產顯示 -->
-    <div id="p1-text">載入中...$： 載入中...</div>
+    <div class="text-display" id="p1-text">載入中...資產： 載入中...</div>
     
     <!-- (按鈕8) 現金池按鈕 -->
     <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：載入中...</button>
@@ -61,72 +61,65 @@
     <!-- 單位轉換按鈕 -->
     <div class="unit-container">
         <!-- (按鈕1) K單位 -->
-        <button class="btn-unit" onclick="convertUnit(1000)">K單位</button>
+        <button class="btn-unit" onclick="convertUnit(1000)">K(千)</button>
         <!-- (按鈕2) M單位 -->
-        <button class="btn-unit" onclick="convertUnit(1000000)">M單位</button>
+        <button class="btn-unit" onclick="convertUnit(1000000)">M(百萬)</button>
     </div>
     
     <!-- 遊戲功能按鈕 -->
     <!-- (按鈕3) 到終點奬金2M -->
-    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金2M</button>
+    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金 ➕2M</button>
     <!-- (按鈕0) 付租金 -->
-    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金</button>
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 {➖入現金池}</button>
     <!-- (按鈕9) 罸款/買地 -->
-    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地</button>
+    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
 
-<!-- 動態彈出視窗 -->
+<!-- 彈出視窗 (按鈕5) -->
 <div class="modal" id="success-modal">
     <div class="modal-content">
-        <div id="modal-title">操作狀態</div>
-        <div id="modal-msg">成功</div>
+        <p style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">操作狀態</p>
         <button class="btn-close" id="btn-modal-5" onclick="closeModal()">領取成功</button>
     </div>
 </div>
 
 <script>
+    // ⚠️ 請在此處貼上你在 Google Apps Script 部署得到的網頁應用程式 URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
 
     const p1Text = document.getElementById('p1-text');
     const btnPool = document.getElementById('btn-pool');
     const amountInput = document.getElementById('amount-input');
     const modal = document.getElementById('success-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalMsg = document.getElementById('modal-msg');
-    const btnModal5 = document.getElementById('btn-modal-5');
     const playerSelect = document.getElementById('player-select');
 
-    // 🎯 關鍵修正：讀取順序改為 網址參數 -> 手機本地記憶體 -> 預設值 1
+    // 從網址獲取當前玩家參數 (?p=1, ?p=2 等)，若無則預設為 1
     const urlParams = new URLSearchParams(window.location.search);
-    let currentPlayer = urlParams.get('p') || localStorage.getItem('saved_player_id') || "1";
+    let currentPlayer = urlParams.get('p') || "1";
     
-    // 只要確認了身份，就把 ID 牢牢記在手機記憶體裡
-    localStorage.setItem('saved_player_id', currentPlayer);
-    
-    // 同步下拉選單顯示
+    // 同步下拉選單的顯示狀態
     playerSelect.value = currentPlayer;
 
-    // 切換玩家（同時更新網址與記憶體）
+    // 切換玩家時修改網址並重新載入
     function switchPlayer(playerVal) {
-        localStorage.setItem('saved_player_id', playerVal);
         window.location.search = `?p=${playerVal}`;
     }
 
-    // 讀取數據並轉換單位
+    // 初始化與定期刷新數據
     async function fetchFromSheet() {
         try {
             const response = await fetch(`${API_URL}?p=${currentPlayer}`);
             const data = await response.json();
-            const formattedCash = parseFloat((Number(data.p_cash) / 1000000).toFixed(4)) + "M";
             
-            p1Text.innerText = `${data.p_name}財產： ${formattedCash}`;
+            // 更新網頁顯示
+            p1Text.innerText = `${data.p_name}財產： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
         }
     }
 
-    // 單位轉換
+    // (按鈕1 & 按鈕2) 單位轉換邏輯
     function convertUnit(multiplier) {
         let val = parseFloat(amountInput.value);
         if (!isNaN(val)) {
@@ -134,11 +127,14 @@
         }
     }
 
-    // 處理常規網頁按鈕互動 (POST)
+
+    // 處理所有與 Sheet 互動的動作
     async function handleAction(actionType) {
         let amount = parseFloat(amountInput.value) || 0;
+        
         try {
             p1Text.innerText = "同步中...";
+            
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: JSON.stringify({
@@ -147,9 +143,10 @@
                     amount: amount
                 })
             });
+            
             const result = await response.json();
             if (result.status === "success") {
-                showModal("操作狀態", "領取成功", "確定");
+                modal.style.display = 'flex';
                 amountInput.value = "";
                 await fetchFromSheet();
             }
@@ -159,53 +156,13 @@
         }
     }
 
-    function showModal(title, msg, btnText) {
-        modalTitle.innerText = title;
-        modalMsg.innerText = msg;
-        btnModal5.innerText = btnText;
-        modal.style.display = 'flex';
-    }
-
     function closeModal() {
         modal.style.display = 'none';
     }
 
-    // 🎯 核心自動化邏輯：檢查網址中是否包含公共 NFC 指令
-    async function checkUrlDirectives() {
-        const action = urlParams.get('action');
-        
-        if (action === 'prep_pool') {
-            try {
-                // 將玩家設為臨時ID "0"，精準把 B11 現金池改寫為 2000000
-                await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        p: "0", 
-                        action: "pay_rent",
-                        amount: 2000000
-                    })
-                });
-
-                // 顯示專屬彈窗
-                showModal("💰 獎金通知", "終點奬金已備妥...", "關閉");
-
-                // 5秒後自動關閉彈窗，並利用記憶體內的 ID 刷新原玩家網頁
-                setTimeout(async () => {
-                    closeModal();
-                    // 🎯 關鍵修正：跳轉時從記憶體拿取正確的玩家 ID，不再盲目退回玩家 1
-                    window.location.href = window.location.pathname + `?p=${currentPlayer}`;
-                }, 5000);
-
-            } catch (error) {
-                console.error("NFC 自動化請求失敗:", error);
-            }
-        } else {
-            fetchFromSheet();
-            setInterval(fetchFromSheet, 5000);
-        }
-    }
-
-    checkUrlDirectives();
+    // 網頁開啟時自動讀取數據，並設定每 5 秒背景自動刷新
+    fetchFromSheet();
+    setInterval(fetchFromSheet, 5000);
 </script>
 
 </body>
