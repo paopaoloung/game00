@@ -1,228 +1,133 @@
-﻿<!DOCTYPE html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>大富翁 NFC 记账</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAS WebRTC 傳輸測試</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f0e6d3; /* 仿棋盘底色 */
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-        .container {
-            max-width: 420px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            padding: 28px 24px;
-        }
-        h1 {
-            font-size: 26px;
-            text-align: center;
-            color: #b8860b;
-            margin-bottom: 18px;
-            letter-spacing: 2px;
-        }
-        .players {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-        .player-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fafafa;
-            border-radius: 14px;
-            padding: 14px 18px;
-            border-left: 6px solid;
-            transition: all 0.2s;
-        }
-        .player-name {
-            font-weight: 700;
-            font-size: 18px;
-        }
-        .player-balance {
-            font-size: 24px;
-            font-weight: 800;
-            color: #333;
-        }
-        .player-balance.positive { color: #2e7d32; }
-        .player-balance.negative { color: #c62828; }
-        .color-A { border-left-color: #e53935; }   /* 红 */
-        .color-B { border-left-color: #1e88e5; }   /* 蓝 */
-        .color-C { border-left-color: #43a047; }   /* 绿 */
-
-        .log-area {
-            background: #f5f0eb;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            font-size: 15px;
-            color: #555;
-        }
-        .log-text { flex: 1; }
-        .reset-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 40px;
-            background: #b8860b;
-            color: white;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .reset-btn:active { background: #9a7209; }
-
-        .tip {
-            margin-top: 14px;
-            font-size: 13px;
-            color: #888;
-            text-align: center;
-        }
-        .tip a { color: #b8860b; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        #log { border: 1px solid #ccc; height: 150px; overflow-y: scroll; text-align: left; padding: 10px; background: #f9f9f9; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🏦 大富翁账本</h1>
 
-    <!-- 三个玩家卡片 -->
-    <div class="players">
-        <div class="player-card color-A">
-            <span class="player-name">👑 玩家 A</span>
-            <span id="balance-A" class="player-balance positive">0</span>
-        </div>
-        <div class="player-card color-B">
-            <span class="player-name">💎 玩家 B</span>
-            <span id="balance-B" class="player-balance positive">0</span>
-        </div>
-        <div class="player-card color-C">
-            <span class="player-name">🍀 玩家 C</span>
-            <span id="balance-C" class="player-balance positive">0</span>
-        </div>
-    </div>
-
-    <!-- 日志区域 -->
-    <div class="log-area">
-        <span id="log-message" class="log-text">等待触碰 NFC 标签…</span>
-    </div>
-
-    <!-- 重置按钮 -->
-    <button class="reset-btn" onclick="resetAll()">🔄 重置所有余额</button>
-M：數字點後6個零/位<br>
-1M=1,000,000;  1.5M=1500000<br>
-K：3個零/位<br>
-1K=1,000;  1.5K=1500<br>
-    <div class="tip">
-        💡 用 NFC 贴纸写入 URL 即可自动记账<br>
-
-        示例：<code>...?player=A&amp;delta=200</code> 或 <code>...?player=B&amp;delta=-100</code>
-    </div>
-</div>
+    <h2>GAS WebRTC P2P 傳輸</h2>
+    <p>房間 ID: <strong id="roomDisplay">123456</strong></p>
+    
+    <button onclick="startAsA()">手機 A (發起端)</button>
+    <button onclick="startAsB()">手機 B (接收端)</button>
+    
+    <hr>
+    <input type="text" id="msgInput" placeholder="輸入要傳送的文字" disabled>
+    <button id="sendBtn" onclick="sendMessage()" disabled>傳送</button>
+    
+    <h3>日誌紀錄：</h3>
+    <div id="log"></div>
 
 <script>
-// ---------- 核心逻辑 ----------
+// ⚠️ 請替換成你自己的 Google Apps Script 部署網址
+const GAS_URL = "https://google.com"; 
+const ROOM_ID = "123456"; // 測試方便固定，實務上可隨機生成並做成二維碼
 
-// 玩家列表
-const PLAYERS = ['A', 'B', 'C'];
+let pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:://google.com' }] });
+let dataChannel;
 
-// 从 localStorage 读取余额，没有则初始化为 0
-function loadBalances() {
-    const data = localStorage.getItem('monopoly_balances');
-    if (data) {
-        try {
-            return JSON.parse(data);
-        } catch(e) {}
-    }
-    // 默认全部 0
-    const defaultBal = {};
-    PLAYERS.forEach(p => defaultBal[p] = 0);
-    return defaultBal;
+function log(msg) {
+    const div = document.getElementById('log');
+    div.innerHTML += msg + '<br>';
+    div.scrollTop = div.scrollHeight;
 }
 
-// 保存余额到 localStorage
-function saveBalances(balances) {
-    localStorage.setItem('monopoly_balances', JSON.stringify(balances));
+// 監聽連線通道狀態
+function setupDataChannelHooks(channel) {
+    channel.onopen = () => {
+        log("✅ 數據通道已開啟！兩機已成功連接。");
+        document.getElementById('msgInput').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+    };
+    channel.onmessage = (e) => log("📩 收到對方資料: " + e.data);
 }
 
-// 更新页面显示
-function updateUI(balances, logMsg) {
-    PLAYERS.forEach(p => {
-        const el = document.getElementById(`balance-${p}`);
-        const val = balances[p];
-        el.textContent = val;
-        // 正负颜色
-        el.className = 'player-balance' + (val >= 0 ? ' positive' : ' negative');
-    });
-    if (logMsg) {
-        document.getElementById('log-message').textContent = logMsg;
-    }
+// ================= 手機 A 的操作流程 =================
+async function startAsA() {
+    log("🚀 手機 A：正在建立 Offer...");
+    dataChannel = pc.createDataChannel("chat");
+    setupDataChannelHooks(dataChannel);
+
+    // 收集網路節點資訊 (ICE)
+    pc.onicecandidate = async (e) => {
+        if (!e.candidate) { // 當 ICE 收集完畢時
+            log("📡 手機 A：上傳 Offer 到 GAS...");
+            await fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors", // 跨網域寫入
+                body: JSON.stringify({ roomId: ROOM_ID, type: "offer", data: JSON.stringify(pc.localDescription) })
+            });
+            log("⏳ 等待手機 B 回應 (每3秒輪詢一次)...");
+            pollForAnswer();
+        }
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 }
 
-// 处理一笔交易
-function processTransaction(player, delta) {
-    const balances = loadBalances();
-    if (!PLAYERS.includes(player)) {
-        updateUI(balances, `❌ 未知玩家 "${player}"`);
+// 手機 A 輪詢等待 B 的回應
+function pollForAnswer() {
+    const timer = setInterval(async () => {
+        let res = await fetch(`${GAS_URL}?roomId=${ROOM_ID}&type=answer`);
+        let json = await res.json();
+        if (json.data) {
+            clearInterval(timer);
+            log("🔗 手機 A：收到 B 的 Answer，建立 P2P 連線中...");
+            await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(json.data)));
+        }
+    }, 3000);
+}
+
+// ================= 手機 B 的操作流程 =================
+async function startAsB() {
+    log("🚀 手機 B：嘗試從 GAS 獲取手機 A 的 Offer...");
+    let res = await fetch(`${GAS_URL}?roomId=${ROOM_ID}&type=offer`);
+    let json = await res.json();
+    
+    if (!json.data) {
+        log("❌ 找不到手機 A 的 Offer，請確認 A 是否已先點擊！");
         return;
     }
-    const oldVal = balances[player];
-    const newVal = oldVal + delta;
-    balances[player] = newVal;
-    saveBalances(balances);
 
-    const sign = delta >= 0 ? '+' : '';
-    const msg = `✅ 玩家 ${player}：${oldVal} → ${newVal} (${sign}${delta})`;
-    updateUI(balances, msg);
-}
+    pc.ondatachannel = (e) => {
+        dataChannel = e.channel;
+        setupDataChannelHooks(dataChannel);
+    };
 
-// 重置所有余额为 0
-function resetAll() {
-    const balances = {};
-    PLAYERS.forEach(p => balances[p] = 0);
-    saveBalances(balances);
-    updateUI(balances, '🔄 所有余额已归零');
-}
+    await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(json.data)));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
 
-// ---------- 解析 URL 参数 ----------
-function parseQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    const player = params.get('player');
-    const deltaStr = params.get('delta');
-    if (player && deltaStr !== null) {
-        const delta = parseInt(deltaStr, 10);
-        if (!isNaN(delta)) {
-            processTransaction(player.toUpperCase(), delta);
-        } else {
-            // 无效数值
-            const balances = loadBalances();
-            updateUI(balances, `⚠️ 无效金额: "${deltaStr}"`);
+    pc.onicecandidate = async (e) => {
+        if (!e.candidate) {
+            log("📡 手機 B：上傳 Answer 到 GAS...");
+            await fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({ roomId: ROOM_ID, type: "answer", data: JSON.stringify(pc.localDescription) })
+            });
+            log("⌛ 手機 B：Answer 已送出，等待連線建立...");
         }
-        // 清除 URL 参数，避免刷新时重复处理
-        window.history.replaceState({}, '', window.location.pathname);
-    } else {
-        // 正常加载，显示当前余额
-        const balances = loadBalances();
-        updateUI(balances, '📋 当前余额如上');
+    };
+}
+
+// ================= 傳送訊息 =================
+function sendMessage() {
+    const msg = document.getElementById('msgInput').value;
+    if (dataChannel && msg) {
+        dataChannel.send(msg);
+        log("📤 我方送出: " + msg);
+        document.getElementById('msgInput').value = "";
     }
 }
-
-// 页面加载完成后执行
-window.addEventListener('DOMContentLoaded', parseQueryParams);
 </script>
 </body>
 </html>
