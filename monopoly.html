@@ -3,133 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAS WebRTC 傳輸測試</title>
+    <title>大富翁財富計算工具 - P1</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; }
-        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
-        #log { border: 1px solid #ccc; height: 150px; overflow-y: scroll; text-align: left; padding: 10px; background: #f9f9f9; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #f4f4f9;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .text-display {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-refresh { background-color: #4CAF50; color: white; }
+        .btn-unit { background-color: #2196F3; color: white; display: inline-block; width: 48%; }
+        .btn-action { background-color: #FF9800; color: white; }
+        .btn-danger { background-color: #f44336; color: white; }
+        .unit-container { display: flex; justify-content: space-between; }
+        
+        /* 彈出視窗樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .btn-close { background-color: #008CBA; color: white; width: auto; padding: 10px 20px; }
     </style>
 </head>
 <body>
 
-    <h2>GAS WebRTC P2P 傳輸</h2>
-    <p>房間 ID: <strong id="roomDisplay">234567</strong></p>
+<div class="container">
+    <!-- (文字1) 燈龍魚資產顯示 -->
+    <div class="text-display" id="p1-text">燈龍魚$： 載入中...</div>
     
-    <button onclick="startAsA()">手機 A (發起端)</button>
-    <button onclick="startAsB()">手機 B (接收端)</button>
+    <!-- (按鈕8) 現金池按鈕 -->
+    <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：載入中...</button>
     
-    <hr>
-    <input type="text" id="msgInput" placeholder="輸入要傳送的文字" disabled>
-    <button id="sendBtn" onclick="sendMessage()" disabled>傳送</button>
+    <!-- (輸入框1) 金額輸入 -->
+    <input type="number" id="amount-input" placeholder="請輸入金額">
     
-    <h3>日誌紀錄：</h3>
-    <div id="log"></div>
+    <!-- 單位轉換按鈕 -->
+    <div class="unit-container">
+        <!-- (按鈕1) K單位 -->
+        <button class="btn-unit" onclick="convertUnit(1000)">K單位</button>
+        <!-- (按鈕2) M單位 -->
+        <button class="btn-unit" onclick="convertUnit(1000000)">M單位</button>
+    </div>
+    
+    <!-- 遊戲功能按鈕 -->
+    <!-- (按鈕3) 到終點奬金2M (註：依據規則直接用按鈕執行數據加總與清空) -->
+    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金2M</button>
+    <!-- (按鈕0) 付租金 -->
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金</button>
+    <!-- (按鈕9) 罸款/買地 -->
+    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地</button>
+</div>
+
+<!-- 彈出視窗 (按鈕5) -->
+<div class="modal" id="success-modal">
+    <div class="modal-content">
+        <p style="font-size: 18px; font-weight: bold;">操作狀態</p>
+        <button class="btn-close" id="btn-modal-5" onclick="closeModal()">領取成功</button>
+    </div>
+</div>
 
 <script>
-// ⚠️ 請替換成你自己的 Google Apps Script 部署網址
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyVNy-fWZV7g0k7RYXKtxKEHYZj5csvaV2o1ElOWkRJ1c0fr_rDWBqUWXsjfY4cafvW/exec"; 
-const ROOM_ID = "234567"; // 測試方便固定，實務上可隨機生成並做成二維碼
+    // ⚠️ 請在此處貼上你在 Google Apps Script 部署得到的網頁應用程式 URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbyBej9bdcUZFuT-h9-isf4hVSPWPA2ws92XYm3MN9ui2jz9vusQrEbm43oMaD8C0pENmw/exec"; 
 
-// ⚠️ 確保這裡的格式完全一模一樣，不要多加 http:// 或額外的斜線
-let pc = new RTCPeerConnection({
-  iceServers: [{ urls: "stun::google.com" }]
-});
+    const p1Text = document.getElementById('p1-text');
+    const btnPool = document.getElementById('btn-pool');
+    const amountInput = document.getElementById('amount-input');
+    const modal = document.getElementById('success-modal');
 
-
-let dataChannel;
-
-
-function log(msg) {
-    const div = document.getElementById('log');
-    div.innerHTML += msg + '<br>';
-    div.scrollTop = div.scrollHeight;
-}
-
-// 監聽連線通道狀態
-function setupDataChannelHooks(channel) {
-    channel.onopen = () => {
-        log("✅ 數據通道已開啟！兩機已成功連接。");
-        document.getElementById('msgInput').disabled = false;
-        document.getElementById('sendBtn').disabled = false;
-    };
-    channel.onmessage = (e) => log("📩 收到對方資料: " + e.data);
-}
-
-// ================= 手機 A 的操作流程 =================
-async function startAsA() {
-    log("🚀 手機 A：正在建立 Offer...");
-    dataChannel = pc.createDataChannel("chat");
-    setupDataChannelHooks(dataChannel);
-
-    // 建立並設定本地 Offer 描述
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    // 🔥 核心修正：不放在 onicecandidate 裡死等！生成後立即強行上傳到 GAS
-    log("📡 手機 A：立即上傳初始 Offer 到 GAS...");
-    const sdpData = encodeURIComponent(JSON.stringify(pc.localDescription));
-    const uploadUrl = `${GAS_URL}?action=save&roomId=${ROOM_ID}&type=offer&data=${sdpData}`;
-    
-    await fetch(uploadUrl, { method: "GET" });
-    log("⏳ 上傳成功！等待手機 B 回應 (每3秒輪詢一次)...");
-    
-    // 同步收集後續的網路候選人（Trickle ICE 正常運作）
-    pc.onicecandidate = async (e) => {
-        if (e.candidate) {
-            // 如果後續還有收集到新的網路資訊，持續補上傳更新
-            const updatedSdp = encodeURIComponent(JSON.stringify(pc.localDescription));
-            await fetch(`${GAS_URL}?action=save&roomId=${ROOM_ID}&type=offer&data=${updatedSdp}`, { method: "GET" });
+    // 初始化與定期刷新數據
+    async function fetchFromSheet() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            
+            // 更新網頁顯示
+            p1Text.innerText = `燈龍魚$： ${data.p1_cash}`;
+            btnPool.innerText = `現金池現金：${data.pool_cash}`;
+        } catch (error) {
+            console.error("讀取試算表失敗:", error);
         }
-    };
-
-    pollForAnswer();
-}
-
-// ================= 手機 B 的操作流程 =================
-async function startAsB() {
-    log("🚀 手機 B：嘗試從 GAS 獲取手機 A 的 Offer...");
-    let res = await fetch(`${GAS_URL}?roomId=${ROOM_ID}&type=offer`);
-    let json = await res.json();
-    
-    if (!json.data) {
-        log("❌ 找不到手機 A 的 Offer，請確認 A 是否已先點擊！");
-        return;
     }
 
-    pc.ondatachannel = (e) => {
-        dataChannel = e.channel;
-        setupDataChannelHooks(dataChannel);
-    };
-
-    await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(json.data)));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    // 🔥 核心修正：生成 Answer 後也是立即強行上傳，不等 onicecandidate 結束
-    log("📡 手機 B：立即上傳初始 Answer 到 GAS...");
-    const sdpDataB = encodeURIComponent(JSON.stringify(pc.localDescription));
-    const uploadUrlB = `${GAS_URL}?action=save&roomId=${ROOM_ID}&type=answer&data=${sdpDataB}`;
-    await fetch(uploadUrlB, { method: "GET" });
-    log("⌛ 手機 B：Answer 已送出，等待連線建立...");
-
-    pc.onicecandidate = async (e) => {
-        if (e.candidate) {
-            const updatedSdpB = encodeURIComponent(JSON.stringify(pc.localDescription));
-            await fetch(`${GAS_URL}?action=save&roomId=${ROOM_ID}&type=answer&data=${updatedSdpB}`, { method: "GET" });
+    // (按鈕1 & 按鈕2) 單位轉換邏輯
+    function convertUnit(multiplier) {
+        let val = parseFloat(amountInput.value);
+        if (!isNaN(val)) {
+            amountInput.value = val * multiplier;
         }
-    };
-}
-
-
-// ================= 傳送訊息 =================
-function sendMessage() {
-    const msg = document.getElementById('msgInput').value;
-    if (dataChannel && msg) {
-        dataChannel.send(msg);
-        log("📤 我方送出: " + msg);
-        document.getElementById('msgInput').value = "";
     }
-}
+
+    // 處理所有與 Sheet 互動的動作
+    async function handleAction(actionType) {
+        let amount = parseFloat(amountInput.value) || 0;
+        
+        // 發送 POST 請求到 Google Sheets 后端
+        try {
+            p1Text.innerText = "同步中...";
+            
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: actionType,
+                    amount: amount
+                })
+            });
+            
+            const result = await response.json();
+            if (result.status === "success") {
+                // 彈出視窗
+                modal.style.display = 'flex';
+                // 清空輸入框
+                amountInput.value = "";
+                // 重新讀取最新數據更新畫面
+                await fetchFromSheet();
+            }
+        } catch (error) {
+            alert("同步失敗，請檢查網路或 API 設定。");
+            await fetchFromSheet();
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    // 網頁開啟時自動讀取一次數據
+    fetchFromSheet();
+    // 每 5 秒自動在背景刷新一次數據，確保多人遊玩時資料同步
+    setInterval(fetchFromSheet, 5000);
 </script>
+
 </body>
 </html>
