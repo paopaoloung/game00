@@ -112,7 +112,7 @@
             const data = await response.json();
             
             // 更新網頁顯示
-            p1Text.innerText = `${data.p_name}財產： ${data.p_cash}`;
+            p1Text.innerText = `${data.p_name}財產： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
@@ -126,6 +126,7 @@
             amountInput.value = val * multiplier;
         }
     }
+
 
     // 處理所有與 Sheet 互動的動作
     async function handleAction(actionType) {
