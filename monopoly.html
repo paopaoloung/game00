@@ -112,7 +112,7 @@
             const data = await response.json();
             
             // 更新網頁顯示
-            p1Text.innerText = `${data.p_name}$： ${data.p_cash}`;
+            p1Text.innerText = `${data.p_name}財產： ${data.p_cash}`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
