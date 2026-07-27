@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大富翁財富計算工具</title>
     <style>
-        /* 網頁基礎樣式（維持原本大小） */
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; background-color: #f4f4f9; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .text-display { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }
@@ -16,19 +15,22 @@
         .btn-action { background-color: #FF9800; color: white; }
         .btn-danger { background-color: #f44336; color: white; }
         .unit-container { display: flex; justify-content: space-between; }
-        .player-selector { margin-bottom: 15px; padding: 5px; font-size: 14px; width: 100%; }
 
-        /* 專屬樣式：用戶資產值放大、橘底白字 */
-        #p1-text {
-            font-size: 26px;          
-            font-weight: 900;         
-            color: #ffffff;            
-            background-color: #FF9800; 
-            padding: 12px;             
-            border-radius: 6px;        
-            text-align: center;        
-            margin-bottom: 20px;       
-        }
+/* 🎯 專屬修改：只針對用戶資產值這一行放大並改為橘底白字 */
+#p1-text {
+    font-size: 26px;          /* 只放大這一行的字體（其餘文字不受影響） */
+    font-weight: bold;         /* 粗體字 */
+    color: #ffffff;            /* 字體變為白色 */
+    background-color: #FF9800; /* 底色變為橙色 */
+    padding: 12px;             /* 讓橙色底色向外延伸，形成好看的看板方塊 */
+    border-radius: 6px;        /* 讓底色方塊的邊角帶有一點圓弧 */
+    text-align: center;        /* 讓資產文字在橙色方塊中居中對齊 */
+    margin-bottom: 20px;       /* 與下方的現金池按鈕保持舒適的距離 */
+}
+
+        
+        /* 玩家切換選單樣式 */
+        .player-selector { margin-bottom: 15px; padding: 5px; font-size: 14px; width: 100%; }
 
         /* 彈出視窗樣式 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
@@ -47,8 +49,8 @@
         <option value="4">玩家 4：玩家4</option>
     </select>
 
-    <!-- (文字1) 資產顯示（已轉換為 M 單位顯示） -->
-    <div id="p1-text">載入中...$： 載入中...</div>
+    <!-- (文字1) 資產顯示 -->
+    <div class="text-display" id="p1-text">載入中...資產： 載入中...</div>
     
     <!-- (按鈕8) 現金池按鈕 -->
     <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：載入中...</button>
@@ -66,11 +68,11 @@
     
     <!-- 遊戲功能按鈕 -->
     <!-- (按鈕3) 到終點奬金2M -->
-    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金2M</button>
+    <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金-2M</button>
     <!-- (按鈕0) 付租金 -->
-    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金</button>
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 [入現金池]</button>
     <!-- (按鈕9) 罸款/買地 -->
-    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地</button>
+    <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 [直接消失]</button>
 </div>
 
 <!-- 彈出視窗 (按鈕5) -->
@@ -82,8 +84,8 @@
 </div>
 
 <script>
-    // ⚠️ 記得將下方網址，換成你自己在 Google Apps Script 部署得到的網頁應用程式 URL 唷！
-    const API_URL = "https://google.com"; 
+    // ⚠️ 請在此處貼上你在 Google Apps Script 部署得到的網頁應用程式 URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
 
     const p1Text = document.getElementById('p1-text');
     const btnPool = document.getElementById('btn-pool');
@@ -91,35 +93,33 @@
     const modal = document.getElementById('success-modal');
     const playerSelect = document.getElementById('player-select');
 
-    // 從網址獲取當前玩家參數
+    // 從網址獲取當前玩家參數 (?p=1, ?p=2 等)，若無則預設為 1
     const urlParams = new URLSearchParams(window.location.search);
     let currentPlayer = urlParams.get('p') || "1";
     
-    // 同步下拉選單
+    // 同步下拉選單的顯示狀態
     playerSelect.value = currentPlayer;
 
-    // 切換玩家
+    // 切換玩家時修改網址並重新載入
     function switchPlayer(playerVal) {
         window.location.search = `?p=${playerVal}`;
     }
 
-    // 讀取數據並轉換單位
+    // 初始化與定期刷新數據
     async function fetchFromSheet() {
         try {
             const response = await fetch(`${API_URL}?p=${currentPlayer}`);
             const data = await response.json();
             
-            // 🎯 核心修改：將試算表的數值除以 1000000，並加上 M 單位
-            const formattedCash = (Number(data.p_cash) / 1000000) + "M";
-            
-            p1Text.innerText = `${data.p_name}$： ${formattedCash}`;
+            // 更新網頁顯示
+            p1Text.innerText = `${data.p_name}財產： ${data.p_cash}`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
         }
     }
 
-    // 單位轉換
+    // (按鈕1 & 按鈕2) 單位轉換邏輯
     function convertUnit(multiplier) {
         let val = parseFloat(amountInput.value);
         if (!isNaN(val)) {
@@ -127,11 +127,13 @@
         }
     }
 
-    // 與 Sheet 互動
+    // 處理所有與 Sheet 互動的動作
     async function handleAction(actionType) {
         let amount = parseFloat(amountInput.value) || 0;
+        
         try {
             p1Text.innerText = "同步中...";
+            
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: JSON.stringify({
@@ -140,6 +142,7 @@
                     amount: amount
                 })
             });
+            
             const result = await response.json();
             if (result.status === "success") {
                 modal.style.display = 'flex';
@@ -156,6 +159,7 @@
         modal.style.display = 'none';
     }
 
+    // 網頁開啟時自動讀取數據，並設定每 5 秒背景自動刷新
     fetchFromSheet();
     setInterval(fetchFromSheet, 5000);
 </script>
