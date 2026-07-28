@@ -29,6 +29,7 @@
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(255, 215, 0, 0.4);
             transition: transform 0.1s, box-shadow 0.1s;
+            margin-bottom: 30px; 
         }
 
         /* 🆕 新增：數字鍵盤區域樣式 */
@@ -58,10 +59,10 @@
     </select>
 
     <!-- (文字1) 資產顯示 -->
-    <div class="gold-txt" id="p1-text">載入中...資產： 載入中...</div>
+    <div class="gold-txt" id="p1-text">玩家資產：...</div>
 
     <!-- (按鈕8) 現金池按鈕 -->
-    <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：載入中...</button>
+    <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：...</button>
     
     <!-- (輸入框1) 金額輸入 -->
     <input type="number" id="amount-input" placeholder="請輸入金額">
@@ -93,7 +94,7 @@
     
     <!-- 遊戲功能按鈕 -->
     <!-- (按鈕0) 付租金 -->
-    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 {➖入現金池}</button>
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 (➖入現金池)</button>
     <!-- (按鈕9) 罸款/買地 -->
     <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
@@ -171,7 +172,7 @@
             
             const result = await response.json();
             if (result.status === "success") {
-                modal.style.display = 'flex';
+    <!--            modal.style.display = 'flex';  取消彈窗-->
                 amountInput.value = "";
                 await fetchFromSheet();
             }
