@@ -22,7 +22,7 @@
     font-size: 26px;          /* 只放大這一行的字體（其餘文字不受影響） */
     font-weight: bold;         /* 粗體字 */
     color: #ffffff;            /* 字體變為白色 */
-    background-color: #1a1a1a; /* 底色變為橙色 #FF9800*/
+    background-color: #fff; /* 底色變為橙色 #FF9800*/
     padding: 20px;             /* 讓橙色底色向外延伸，形成好看的看板方塊 */
     border-radius: 50px;        /* 讓底色方塊的邊角帶有一點圓弧 */
     text-align: center;        /* 讓資產文字在橙色方塊中居中對齊 */
@@ -114,7 +114,7 @@
             const data = await response.json();
             
             // 更新網頁顯示
-            p1Text.innerText = `${data.p_name}財產💰： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
+            p1Text.innerText = `${data.p_name}💰： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
