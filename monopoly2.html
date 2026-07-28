@@ -65,23 +65,24 @@
     <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：...</button>
     
     <!-- (輸入框1) 金額輸入 -->
-    <input type="text" id="amount-input" placeholder="請輸入金額">
+    <input type="number" id="amount-input" placeholder="請輸入金額">
     
-    <!-- 🆕 新增：數字按鈕（共兩行，按鈕平均大小） -->
+    <!-- 🆕 數字按鈕（共兩行，平均大小） -->
     <div class="num-pad-row">
         <button class="btn-num" onclick="appendNum('1')">1</button>
         <button class="btn-num" onclick="appendNum('2')">2</button>
         <button class="btn-num" onclick="appendNum('3')">3</button>
         <button class="btn-num" onclick="appendNum('4')">4</button>
         <button class="btn-num" onclick="appendNum('5')">5</button>
-        <button class="btn-num" onclick="appendNum('6')">6</button>
     </div>
     <div class="num-pad-row">
-        <button class="btn-num btn-dot" onclick="appendNum('.')">•</button> 
+        <button class="btn-num" onclick="appendNum('6')">6</button>
         <button class="btn-num" onclick="appendNum('7')">7</button>
         <button class="btn-num" onclick="appendNum('8')">8</button>
         <button class="btn-num" onclick="appendNum('9')">9</button>
         <button class="btn-num" onclick="appendNum('0')">0</button>
+        <button class="btn-num btn-dot" onclick="appendNum('.')">•</button>
+
         <button class="btn-num btn-clear" onclick="clearInput()">C</button> <!-- 追加清除鍵，維持兩行天平排版 -->
     </div>
     
@@ -139,20 +140,29 @@
         }
     }
 
-    // 🎯 累加邏輯：直接在原字串後方追加（包含小數點）
-    function appendNum(num) {
-        // 防止重複輸入多個小數點
-        if (num === '.' && amountInput.value.includes('.')) {
-            return; 
+
+    // 🎯 重新設計的防失敗疊加邏輯
+    function appendNum(clickedValue) {
+        // 1. 讀取輸入金額框原數值
+        let currentText = amountInput.value ? amountInput.value.toString() : "";
+        
+        // 防呆：如果已經有小數點，又點了小數點，直接跳過不做事
+        if (clickedValue === '.' && currentText.includes('.')) {
+            return;
         }
-        amountInput.value += num;
+        
+        // 優化：如果是空白狀態點擊小數點，自動變成 "0."
+        if (clickedValue === '.' && currentText === "") {
+            currentText = "0";
+        }
+        
+        // 2. 將按鈕的數值疊加上去
+        let newText = currentText + clickedValue;
+        
+        // 3. 輸出到 input 框
+        amountInput.value = newText;
     }
 
-
-    // 🆕 新增：點擊 • 按鈕時，將小數點追加到輸入框中
-    function appendNum(num) {
-        amountInput.value = num;
-    }
     
     // 🆕 新增：點擊 C 鍵清除輸入框內容
     function clearInput() {
