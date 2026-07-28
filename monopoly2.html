@@ -9,7 +9,7 @@
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .text-display { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }  
 
-        input[type="number"] { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        input[type="number"] { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; font-size: 16px; margin-bottom: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .btn-refresh { background-color: #4CAF50; color: white; }
         .btn-unit { background-color: #2196F3; color: white; display: inline-block; width: 48%; }
@@ -167,7 +167,7 @@
     // 🆕 新增：點擊 C 鍵清除輸入框內容
     function clearInput() {
         let val = parseFloat(amountInput.value);
-        amountInput.value = `.`;
+        amountInput.value = "";
     }
 
     function convertUnit(multiplier) {
