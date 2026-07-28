@@ -30,7 +30,7 @@
     text-align: center;        /* 讓資產文字在橙色方塊中居中對齊 */
     margin-bottom: 20px;       /* 與下方的現金池按鈕保持舒適的距離 */
     */
-                padding: 20px 40px;
+            padding: 20px 40px;
             font-size: 28px;
             font-weight: bold;
             color: #fff;
@@ -161,7 +161,7 @@
             
             const result = await response.json();
             if (result.status === "success") {
-                modal.style.display = 'flex';
+         <!--       modal.style.display = 'flex';  去除彈窗-->
                 amountInput.value = "";
                 await fetchFromSheet();
             }
