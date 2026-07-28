@@ -29,7 +29,7 @@
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(255, 215, 0, 0.4);
             transition: transform 0.1s, box-shadow 0.1s;
-            margin-bottom: 30px; 
+            margin-bottom: 18px; 
         }
 
         /* 🆕 新增：數字鍵盤區域樣式 */
@@ -74,13 +74,15 @@
         <button class="btn-num" onclick="appendNum('3')">3</button>
         <button class="btn-num" onclick="appendNum('4')">4</button>
         <button class="btn-num" onclick="appendNum('5')">5</button>
+        <button class="btn-num" onclick="appendNum('6')">6</button>
     </div>
     <div class="num-pad-row">
-        <button class="btn-num" onclick="appendNum('6')">6</button>
+
         <button class="btn-num" onclick="appendNum('7')">7</button>
         <button class="btn-num" onclick="appendNum('8')">8</button>
         <button class="btn-num" onclick="appendNum('9')">9</button>
         <button class="btn-num" onclick="appendNum('0')">0</button>
+                <button class="btn-num" onclick="appendNum('•')">0</button>
         <button class="btn-num btn-clear" onclick="clearInput()">C</button> <!-- 追加清除鍵，維持兩行天平排版 -->
     </div>
     
@@ -143,9 +145,15 @@
         amountInput.value += num;
     }
 
+    // 🆕 新增：點擊 • 按鈕時，將小數點追加到輸入框中
+    function appendNum(num) {
+        amountInput.value = num;
+    }
+    
     // 🆕 新增：點擊 C 鍵清除輸入框內容
     function clearInput() {
-        amountInput.value = "";
+        let val = parseFloat(amountInput.value);
+        amountInput.value = `.`;
     }
 
     function convertUnit(multiplier) {
