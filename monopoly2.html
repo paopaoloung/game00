@@ -65,7 +65,7 @@
     <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：...</button>
     
     <!-- (輸入框1) 金額輸入 -->
-    <input type="number" id="amount-input" placeholder="請輸入金額">
+    <input type="text" id="amount-input" placeholder="請輸入金額">
     
     <!-- 🆕 新增：數字按鈕（共兩行，按鈕平均大小） -->
     <div class="num-pad-row">
@@ -77,12 +77,11 @@
         <button class="btn-num" onclick="appendNum('6')">6</button>
     </div>
     <div class="num-pad-row">
-
+        <button class="btn-num btn-dot" onclick="appendNum('.')">•</button> 
         <button class="btn-num" onclick="appendNum('7')">7</button>
         <button class="btn-num" onclick="appendNum('8')">8</button>
         <button class="btn-num" onclick="appendNum('9')">9</button>
         <button class="btn-num" onclick="appendNum('0')">0</button>
-                <button class="btn-num" onclick="appendNum('•')">0</button>
         <button class="btn-num btn-clear" onclick="clearInput()">C</button> <!-- 追加清除鍵，維持兩行天平排版 -->
     </div>
     
@@ -140,10 +139,15 @@
         }
     }
 
-    // 🆕 新增：點擊數字按鈕時，將數字追加到輸入框中
+    // 🎯 累加邏輯：直接在原字串後方追加（包含小數點）
     function appendNum(num) {
+        // 防止重複輸入多個小數點
+        if (num === '.' && amountInput.value.includes('.')) {
+            return; 
+        }
         amountInput.value += num;
     }
+
 
     // 🆕 新增：點擊 • 按鈕時，將小數點追加到輸入框中
     function appendNum(num) {
