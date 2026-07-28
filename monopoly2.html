@@ -141,6 +141,7 @@
     }
 
 
+
     // 🎯 重新設計的防失敗疊加邏輯
     function appendNum(clickedValue) {
         // 1. 讀取輸入金額框原數值
@@ -153,7 +154,7 @@
         
         // 優化：如果是空白狀態點擊小數點，自動變成 "0."
         if (clickedValue === '.' && currentText === "") {
-            currentText = "0";
+            currentText = "0.";
         }
         
         // 2. 將按鈕的數值疊加上去
@@ -163,7 +164,6 @@
         amountInput.value = newText;
     }
 
-    
     // 🆕 新增：點擊 C 鍵清除輸入框內容
     function clearInput() {
         let val = parseFloat(amountInput.value);
