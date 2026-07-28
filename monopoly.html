@@ -10,7 +10,7 @@
      /*   .text-display { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }  */
         .gold-txt {
             padding: 20px 40px;
-            font-size: 28px;
+            font-size: 20px;
             font-weight: bold;
             color: #fff;
             background: linear-gradient(45deg, #ffd700, #ffa500);
@@ -67,7 +67,7 @@
     </select>
 
     <!-- (文字1) 資產顯示 -->
-    /* <div class="gold-txt" id="p1-text">載入中...資產： 載入中...</div> */
+    <!-- <div class="gold-txt" id="p1-text">載入中...資產： 載入中...</div> -->
     <div class="gold-txt">載入中...資產： 載入中...</div>
 
     <!-- (按鈕8) 現金池按鈕 -->
@@ -130,7 +130,7 @@
             const data = await response.json();
             
             // 更新網頁顯示
-            p1Text.innerText = `${data.p_name}財產： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
+            p1Text.innerText = `${data.p_name}財產💰： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
             console.error("讀取試算表失敗:", error);
