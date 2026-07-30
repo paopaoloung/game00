@@ -124,6 +124,7 @@
 <script>
    const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
 
+
     const p1Text = document.getElementById('p1-text');
     const btnPool = document.getElementById('btn-pool');
     const amountInput = document.getElementById('amount-input');
@@ -134,64 +135,6 @@
     let currentPlayer = urlParams.get('p') || "1";
     
     playerSelect.value = currentPlayer;
-
-    // ==========================================
-    // 🎯 🆕 新增：NFC 晶片特定內容探測與自動處理邏輯
-    // ==========================================
-    window.addEventListener('DOMContentLoaded', () => {
-        const action = urlParams.get('action');
-        const player = urlParams.get('player');
-        const amount = urlParams.get('amount');
-
-        // 當偵測到網址符合大富翁加碼規則時
-        if (action === 'prep_pool' && player === '現金池' && amount) {
-            // 建立無感透明度覆蓋畫面，告知玩家系統正在執行加碼
-            const overlay = document.createElement('div');
-            overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:#eafeec; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:Arial,sans-serif;";
-            overlay.innerHTML = `
-                <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); text-align:center; max-width:85%;">
-                    <h1 style="color:#2ecc71; margin:0 0 10px 0; font-size:24px;">💰 金額同步中...</h1>
-                    <p style="color:#333; margin:5px 0; font-size:16px;">正在往現金池匯入 <strong>$${Number(amount).toLocaleString()}</strong></p>
-                    <div style="font-size:13px; color:#7f8c8d; margin-top:15px;" id="nfc-status-text">連線至試算表資料庫...</div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-
-            // 將請求動態發送至您的 GAS 
-            const gasNfcUrl = `${API_URL}?player=現金池&amount=${amount}`;
-
-            fetch(gasNfcUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "success" || data.message === "現金池加碼成功") {
-                        document.getElementById('nfc-status-text').innerText = "✅ 加碼成功！網頁即將關閉...";
-                        document.getElementById('nfc-status-text').style.color = "#27ae60";
-                        
-                        // 1秒後執行完美自動關閉分頁
-                        setTimeout(() => {
-                            window.close();
-                            // 🚀 雙重防護安全線：如果手機瀏覽器安全設定不允許關閉獨立分頁，則在一瞬間自動跳轉回無參數的大富翁記帳首頁
-                            setTimeout(() => {
-                                window.location.href = window.location.pathname; 
-                            }, 200);
-                        }, 1000);
-                    } else {
-                        document.getElementById('nfc-status-text').innerText = "⚠️ 試算表回應異常，頁面即將跳轉...";
-                        setTimeout(() => { window.location.href = window.location.pathname; }, 1500);
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('nfc-status-text').innerText = "❌ 同步失敗，改為載入正常面板";
-                    document.getElementById('nfc-status-text').style.color = "#c0392b";
-                    console.error("NFC加碼失敗:", err);
-                    // 失敗時，2秒後移除遮罩正常顯示主面板，不干擾遊戲進行
-                    setTimeout(() => { overlay.remove(); fetchFromSheet(); }, 2000);
-                });
-        } else {
-            // 若為一般開啟，則正常初始化面板資料
-            fetchFromSheet();
-        }
-    });
 
     function switchPlayer(playerVal) {
         window.location.search = `?p=${playerVal}`;
@@ -209,7 +152,167 @@
         }
     }
 
+
+
     // 🎯 重新設計的防失敗疊加邏輯
     function appendNum(clickedValue) {
         // 1. 讀取輸入金額框原數值
         let currentText = amountInput.value ? amountInput.value.toString() : "";
+        
+        // 防呆：如果已經有小數點，又點了小數點，直接跳過不做事
+        if (clickedValue === '.' && currentText.includes('.')) {
+            return;
+        }
+        
+        // 優化：如果是空白狀態點擊小數點，自動變成 "0."
+        if (clickedValue === '.' && currentText === "") {
+            currentText = "0";
+        }
+        
+        // 2. 將按鈕的數值疊加上去
+        let newText = currentText + clickedValue;
+        
+        // 3. 輸出到 input 框
+        amountInput.value = newText;
+    }
+
+    // 🆕 新增：點擊 C 鍵清除輸入框內容
+    function clearInput() {
+        let val = parseFloat(amountInput.value);
+        amountInput.value = "";
+    }
+
+    function convertUnit(multiplier) {
+        let val = parseFloat(amountInput.value);
+        if (!isNaN(val)) {
+            amountInput.value = val * multiplier;
+        }
+    }
+
+    async function handleAction(actionType) {
+        let amount = parseFloat(amountInput.value) || 0;
+        
+        try {
+            p1Text.innerText = "同步中...";
+            
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    p: currentPlayer,
+                    action: actionType,
+                    amount: amount
+                })
+            });
+            
+            const result = await response.json();
+            if (result.status === "success") {
+    <!--            modal.style.display = 'flex';  取消彈窗-->
+                amountInput.value = "";
+                await fetchFromSheet();
+            }
+        } catch (error) {
+            alert("同步失敗，請檢查網路或 API 設定。");
+            await fetchFromSheet();
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    fetchFromSheet();
+    setInterval(fetchFromSheet, 5000);
+
+
+
+    // ==========================================
+    // 🚀 新增：NFC 探測、無感自動關閉與 GAS 觸發邏輯
+    // ==========================================
+
+    // 1. 建立一個不影響原版面的 JS 原生隱藏彈窗
+    const nfcAlert = document.createElement('div');
+    nfcAlert.style.cssText = `
+        display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background-color: #323232; color: white; padding: 16px 24px; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; font-weight: bold; font-size: 16px;
+    `;
+    document.body.appendChild(nfcAlert);
+
+    // 2. 顯示並在 3 秒後自動隱藏彈窗的函式
+    function showNfcToast(message) {
+        nfcAlert.innerText = message;
+        nfcAlert.style.display = 'block';
+        
+        // 3秒後無感自動關閉
+        setTimeout(() => {
+            nfcAlert.style.display = 'none';
+        }, 3000);
+    }
+
+    // 3. 預留的 GAS 寫入特定儲存格函式 (稍後可替換你的參考代碼)
+    async function writeToSpecificCell(nfcContent) {
+        try {
+            console.log("準備將 NFC 內容寫入特定儲存格:", nfcContent);
+            // 這裡先建立基礎發送骨架，等待你提供具體的儲存格參數
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "nfc_write",
+                    p: currentPlayer,
+                    nfc_data: nfcContent
+                })
+            });
+            const result = await response.json();
+            if (result.status === "success") {
+                console.log("NFC 數據成功寫入試算表");
+                fetchFromSheet(); // 寫入後自動刷新畫面的數據
+            }
+        } catch (error) {
+            console.error("NFC 寫入 GAS 失敗:", error);
+        }
+    }
+
+    // 4. 初始化 Web NFC 監聽
+    async function startNfcScan() {
+        if ('NDEFReader' in window) {
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                console.log("NFC 掃描器已成功啟動...");
+
+                ndef.addEventListener("reading", ({ message, serialNumber }) => {
+                    for (const record of message.records) {
+                        if (record.recordType === "text") {
+                            const textDecoder = new TextDecoder(record.encoding);
+                            const nfcContent = textDecoder.decode(record.data);
+                            
+                            // 🎯 偵測到特定內容（請將 "你的特定內容" 替換成你想比對的 NFC 晶片文字）
+                            if (nfcContent.includes("你的特定內容") || nfcContent !== "") {
+                                
+                                // 觸發彈窗提示
+                                showNfcToast(`感應成功！正在寫入數據...`);
+                                
+                                // 調用 GAS 寫入特定儲存格
+                                writeToSpecificCell(nfcContent);
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("NFC 啟動失敗:", error);
+            }
+        } else {
+            console.log("此設備或瀏覽器不支援 Web NFC 功能（建議使用 Android Chrome）");
+        }
+    }
+
+    // 網頁載入時自動執行讀取與啟動 NFC
+    window.onload = function() {
+        fetchFromSheet();
+        startNfcScan(); // 自動啟動 NFC 監聽
+    };
+
+</script>
+
+</body>
+</html>
