@@ -254,9 +254,11 @@ document.getElementById('nfcScanBtn').addEventListener('click', async () => {
         const gasUrl = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec";
         
         // 發送請求
-        const img = new Image();
-        img.src = gasUrl;
-        
+      const img = new Image();
+// 💡 加入此行，強迫瀏覽器立刻跟 Google 伺服器要這張「虛擬圖片」以完成發送
+img.onload = function() { console.log("GAS 接收成功"); };
+img.src = gasUrl + "&t=" + new Date().getTime(); // 加時間戳防止瀏覽器快取舊資料
+  
         alert("💰 條件吻合，已成功向 GAS 發送寫入請求！");
       } else {
         alert("❌ 條件不吻合，未向 GAS 發送請求。請確認晶片文字是否正確！");
