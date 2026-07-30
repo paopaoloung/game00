@@ -113,15 +113,6 @@
     <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
 
-
-<button id="nfcScanBtn" style="padding: 12px 24px; font-size: 16px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer;">
-  📡 感應 NFC 晶片
-</button>
-
-
-
-
-    
 <!-- 彈出視窗 (按鈕5) -->
 <div class="modal" id="success-modal">
     <div class="modal-content">
@@ -231,67 +222,7 @@
 
     fetchFromSheet();
     setInterval(fetchFromSheet, 5000);
-
-
-
-
-    
-
-document.getElementById('nfcScanBtn').addEventListener('click', async () => {
-  // 檢查瀏覽器是否支援 WebNFC
-  if ('NDEFReader' in window) {
-    try {
-      const ndef = new NDEFReader();
-      await ndef.scan(); // 喚醒手機的 NFC 天線
-      alert("NFC 感應器已啟動！請將晶片貼靠近手機背面。");
-
-      // 監聽感應事件
-      ndef.onreading = async (event) => {
-        const decoder = new TextDecoder();
-        
-        for (const record of event.message.records) {
-          if (record.recordType === "text") {
-            const tagValue = decoder.decode(record.data);
-            
-            // 偵測到對應的純文字識別碼
-            if (tagValue === "SET_POOL_2000000") {
-              
-              // 替換成您的 GAS 部署網址
-              const gasUrl = "https://google.com";
-              
-              // 在背景悄悄發送請求給 GAS，網頁不跳轉、不開新分頁
-              try {
-                const response = await fetch(gasUrl, { method: 'GET', mode: 'no-cors' });
-                alert("💰 現金池已成功寫入 2,000,000 元！");
-                
-                // 如果您的網頁原本有重新整理畫面的 function（例如 loadData()），可以在這裡呼叫它
-                if (typeof updateScoreboard === "function") updateScoreboard();
-                
-              } catch (err) {
-                alert("傳送資料至試算表時發生錯誤: " + err);
-              }
-            }
-          }
-        }
-      };
-
-    } catch (error) {
-      alert(`NFC 啟動失敗: ${error}`);
-    }
-  } else {
-    alert("您的瀏覽器或裝置不支援 WebNFC。(必須為 Android + Chrome 瀏覽器 + HTTPS 網站)");
-  }
-});
-
-
-
-    
 </script>
-
-
-
-
-
     
 </body>
 </html>
