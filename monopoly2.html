@@ -240,31 +240,31 @@ document.getElementById('nfcScanBtn').addEventListener('click', async () => {
       alert("NFC 感應功能已啟動！請將大富翁晶片貼靠近手機背面。");
 
       // 2. 開始監聽 NFC 標籤探測事件
-      ndef.onreading = async (event) => {
-        const decoder = new TextDecoder();
+     ndef.onreading = async (event) => {
+  const decoder = new TextDecoder();
+  
+  for (const record of event.message.records) {
+    if (record.recordType === "text") {
+      const tagValue = decoder.decode(record.data);
+      
+      // 🕵️‍♂️ 測試用彈窗：這會直接秀出手機「實際讀到」的完整晶片文字是什麼
+      alert("【手機實際讀到的文字】為: " + tagValue);
+      
+      if (tagValue.includes("SET_POOL_2000000")) {
+        const gasUrl = "https://google.com";
         
-        // 迴圈讀取晶片內的所有資料區塊
-        for (const record of event.message.records) {
-          if (record.recordType === "text") {
-            const tagValue = decoder.decode(record.data);
-            
-            // 3. 檢查晶片內的純文字是否符合識別碼
-            if (tagValue.includes("SET_POOL_2000000")) {
-              
-              // ⚠️ 請將下方網址替換為您全新的 GAS 部署網址（保留後方的參數）
-              const gasUrl = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec";
-              
-              // 💡 使用圖片標籤法發送請求，完美繞過所有瀏覽器跨網域攔截
-const img = new Image();
-img.src = gasUrl; 
+        // 發送請求
+        const img = new Image();
+        img.src = gasUrl;
+        
+        alert("💰 條件吻合，已成功向 GAS 發送寫入請求！");
+      } else {
+        alert("❌ 條件不吻合，未向 GAS 發送請求。請確認晶片文字是否正確！");
+      }
+    }
+  }
+};
 
-// 只要 GAS 有收到並執行，無論回傳什麼，都會觸發成功提示
-alert("💰 現金池感應成功！B11 已寫入 2,000,000 元。");
-
-            }
-          }
-        }
-      };
 
     } catch (error) {
       alert(`NFC 啟動失敗，請確認是否開啟手機的 NFC 功能: ${error}`);
