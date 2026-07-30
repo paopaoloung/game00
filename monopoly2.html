@@ -121,6 +121,13 @@
     </div>
 </div>
 
+
+<!-- 在大富翁網頁面板合適的位置加入此按鈕 -->
+<button id="nfcScanBtn" style="padding: 12px 24px; font-size: 16px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+  📡 感應 NFC 現金池晶片
+</button>
+
+
 <script>
    const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
 
@@ -222,6 +229,57 @@
 
     fetchFromSheet();
     setInterval(fetchFromSheet, 5000);
+
+
+document.getElementById('nfcScanBtn').addEventListener('click', async () => {
+  // 1. 檢查目前的 Android 瀏覽器是否支援 WebNFC
+  if ('NDEFReader' in window) {
+    try {
+      const ndef = new NDEFReader();
+      await ndef.scan(); // 喚醒手機內建的 NFC 晶片探測天線
+      alert("NFC 感應功能已啟動！請將大富翁晶片貼靠近手機背面。");
+
+      // 2. 開始監聽 NFC 標籤探測事件
+      ndef.onreading = async (event) => {
+        const decoder = new TextDecoder();
+        
+        // 迴圈讀取晶片內的所有資料區塊
+        for (const record of event.message.records) {
+          if (record.recordType === "text") {
+            const tagValue = decoder.decode(record.data);
+            
+            // 3. 檢查晶片內的純文字是否符合識別碼
+            if (tagValue === "SET_POOL_2000000") {
+              
+              // ⚠️ 請將下方網址替換為您全新的 GAS 部署網址（保留後方的參數）
+              const gasUrl = "https://google.com";
+              
+              try {
+                // 在網頁背景悄悄發送請求給 GAS，絕不開啟新分頁
+                const response = await fetch(gasUrl, { method: 'GET', mode: 'no-cors' });
+                alert("💰 現金池感應成功！B11 已寫入 2,000,000 元。");
+                
+                // 💡 如果您原有的 GitHub 網頁有設計重新整理數據的 function（例如 loadData() ），
+                // 可以在這裡直接呼叫它，讓網頁上的分數面板立即跳成最新數字：
+                // if (typeof loadData === "function") loadData();
+                
+              } catch (err) {
+                alert("發送數據至試算表時失敗: " + err);
+              }
+            }
+          }
+        }
+      };
+
+    } catch (error) {
+      alert(`NFC 啟動失敗，請確認是否開啟手機的 NFC 功能: ${error}`);
+    }
+  } else {
+    alert("您的瀏覽器或裝置不支援 WebNFC。\n(必須使用 Android 手機 + Chrome 瀏覽器，且網站必須是 https 安全連線)");
+  }
+});
+
+
 </script>
     
 </body>
