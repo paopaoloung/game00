@@ -9,7 +9,19 @@
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .text-display { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }  
 
-        input[type="number"] { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+     <!--   input[type="text"] { width: 100%; margin-bottom: 20px; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; } -->
+       
+        /* 🎯 關鍵修正：將 type="number" 徹底改為 type="text"，確保 100% 寬度與間距生效 */
+        input[type="text"] { 
+            width: 100%; 
+            padding: 12px; 
+            font-size: 16px; 
+            margin-bottom: 25px; /* 🛠️ 已加大間距，徹底推開下方的數字按鈕 */
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+        }
+        
         button { width: 100%; padding: 12px; font-size: 16px; margin-bottom: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .btn-refresh { background-color: #4CAF50; color: white; }
         .btn-unit { background-color: #2196F3; color: white; display: inline-block; width: 48%; }
@@ -17,19 +29,8 @@
         .btn-danger { background-color: #f44336; color: white; }
         .unit-container { display: flex; justify-content: space-between; }
 
-/* 🎯 專屬修改：只針對用戶資產值這一行放大並改為橘底白字 */
-#p1-text {
-
-    /*
-    font-size: 26px;          /* 只放大這一行的字體（其餘文字不受影響） */
-    font-weight: bold;         /* 粗體字 */
-    color: #ffffff;            /* 字體變為白色 */
-    background-color: #ffff00; /* 底色變為橙色 #FF9800*/
-    padding: 20px;             /* 讓橙色底色向外延伸，形成好看的看板方塊 */
-    border-radius: 50px;        /* 讓底色方塊的邊角帶有一點圓弧 */
-    text-align: center;        /* 讓資產文字在橙色方塊中居中對齊 */
-    margin-bottom: 20px;       /* 與下方的現金池按鈕保持舒適的距離 */
-    */
+        /* 🎯 專屬修改：只針對用戶資產值這一行放大並改為橘底白字 */
+        #p1-text {
             padding: 20px 40px;
             font-size: 28px;
             font-weight: bold;
@@ -40,9 +41,15 @@
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(255, 215, 0, 0.4);
             transition: transform 0.1s, box-shadow 0.1s;
-}
+            margin-bottom: 18px; 
+        }
 
-        
+        /* 🆕 新增：數字鍵盤區域樣式 */
+        .num-pad-row { display: flex; justify-content: space-between; gap: 5px; margin-bottom: 10px; }
+        .btn-num { background-color: #e0e0e0; color: #333; margin-bottom: 0; flex: 1; padding: 10px 0; font-size: 18px; }
+        .btn-num:active { background-color: #bdbdbd; }
+        .btn-clear { background-color: #9e9e9e; color: white; } /* 清除鍵額外明顯 */
+
         /* 玩家切換選單樣式 */
         .player-selector { margin-bottom: 15px; padding: 5px; font-size: 14px; width: 100%; }
 
@@ -64,14 +71,32 @@
     </select>
 
     <!-- (文字1) 資產顯示 -->
-    <div class="gold-txt" id="p1-text">載入中...資產： 載入中...</div>
-
+    <div class="gold-txt" id="p1-text">玩家資產：統計中...</div>
 
     <!-- (按鈕8) 現金池按鈕 -->
-    <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：載入中...</button>
+    <button class="btn-refresh" id="btn-pool" onclick="handleAction('click_pool')">現金池現金：統計中...</button>
     
     <!-- (輸入框1) 金額輸入 -->
-    <input type="number" id="amount-input" placeholder="請輸入金額">
+    <input type="text" id="amount-input" placeholder="請輸入金額">
+    
+    <!-- 🆕 數字按鈕（共兩行，平均大小） -->
+    <div class="num-pad-row">
+        <button class="btn-num" onclick="appendNum('1')">1</button>
+        <button class="btn-num" onclick="appendNum('2')">2</button>
+        <button class="btn-num" onclick="appendNum('3')">3</button>
+        <button class="btn-num" onclick="appendNum('4')">4</button>
+        <button class="btn-num" onclick="appendNum('5')">5</button>
+    </div>
+    <div class="num-pad-row">
+        <button class="btn-num" onclick="appendNum('6')">6</button>
+        <button class="btn-num" onclick="appendNum('7')">7</button>
+        <button class="btn-num" onclick="appendNum('8')">8</button>
+        <button class="btn-num" onclick="appendNum('9')">9</button>
+        <button class="btn-num" onclick="appendNum('0')">0</button>
+        <button class="btn-num btn-dot" onclick="appendNum('.')">.</button>
+
+        <button class="btn-num btn-clear" onclick="clearInput()">C</button> <!-- 追加清除鍵，維持兩行天平排版 -->
+    </div>
     
     <!-- 單位轉換按鈕 -->
     <div class="unit-container">
@@ -82,10 +107,8 @@
     </div>
     
     <!-- 遊戲功能按鈕 -->
-    <!-- (按鈕3) 到終點奬金2M -->
-   <!-- <button class="btn-action" onclick="handleAction('end_prize')">到終點奬金 ➕2M</button> -->
     <!-- (按鈕0) 付租金 -->
-    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 {➖入現金池}</button>
+    <button class="btn-danger" onclick="handleAction('pay_rent')">付租金 (➖入現金池)</button>
     <!-- (按鈕9) 罸款/買地 -->
     <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
@@ -99,8 +122,8 @@
 </div>
 
 <script>
-    // ⚠️ 請在此處貼上你在 Google Apps Script 部署得到的網頁應用程式 URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
+   const API_URL = "https://script.google.com/macros/s/AKfycbzpIw0JWWqZ2nPxPouxwvk3oWjM5A9iM-LpF1FLPB5TlaqZT2To6TzJNxPzkiZ9kAfUxw/exec"; 
+
 
     const p1Text = document.getElementById('p1-text');
     const btnPool = document.getElementById('btn-pool');
@@ -108,25 +131,20 @@
     const modal = document.getElementById('success-modal');
     const playerSelect = document.getElementById('player-select');
 
-    // 從網址獲取當前玩家參數 (?p=1, ?p=2 等)，若無則預設為 1
     const urlParams = new URLSearchParams(window.location.search);
     let currentPlayer = urlParams.get('p') || "1";
     
-    // 同步下拉選單的顯示狀態
     playerSelect.value = currentPlayer;
 
-    // 切換玩家時修改網址並重新載入
     function switchPlayer(playerVal) {
         window.location.search = `?p=${playerVal}`;
     }
 
-    // 初始化與定期刷新數據
     async function fetchFromSheet() {
         try {
             const response = await fetch(`${API_URL}?p=${currentPlayer}`);
             const data = await response.json();
             
-            // 更新網頁顯示
             p1Text.innerText = `${data.p_name}💰： ${data.p_cash} (${Number(data.p_cash) / 1000000}M)`;
             btnPool.innerText = `現金池現金：${data.pool_cash}`;
         } catch (error) {
@@ -134,7 +152,36 @@
         }
     }
 
-    // (按鈕1 & 按鈕2) 單位轉換邏輯
+
+
+    // 🎯 重新設計的防失敗疊加邏輯
+    function appendNum(clickedValue) {
+        // 1. 讀取輸入金額框原數值
+        let currentText = amountInput.value ? amountInput.value.toString() : "";
+        
+        // 防呆：如果已經有小數點，又點了小數點，直接跳過不做事
+        if (clickedValue === '.' && currentText.includes('.')) {
+            return;
+        }
+        
+        // 優化：如果是空白狀態點擊小數點，自動變成 "0."
+        if (clickedValue === '.' && currentText === "") {
+            currentText = "0";
+        }
+        
+        // 2. 將按鈕的數值疊加上去
+        let newText = currentText + clickedValue;
+        
+        // 3. 輸出到 input 框
+        amountInput.value = newText;
+    }
+
+    // 🆕 新增：點擊 C 鍵清除輸入框內容
+    function clearInput() {
+        let val = parseFloat(amountInput.value);
+        amountInput.value = "";
+    }
+
     function convertUnit(multiplier) {
         let val = parseFloat(amountInput.value);
         if (!isNaN(val)) {
@@ -142,8 +189,6 @@
         }
     }
 
-
-    // 處理所有與 Sheet 互動的動作
     async function handleAction(actionType) {
         let amount = parseFloat(amountInput.value) || 0;
         
@@ -161,7 +206,7 @@
             
             const result = await response.json();
             if (result.status === "success") {
-         <!--       modal.style.display = 'flex';  去除彈窗-->
+    <!--            modal.style.display = 'flex';  取消彈窗-->
                 amountInput.value = "";
                 await fetchFromSheet();
             }
@@ -175,10 +220,9 @@
         modal.style.display = 'none';
     }
 
-    // 網頁開啟時自動讀取數據，並設定每 5 秒背景自動刷新
     fetchFromSheet();
     setInterval(fetchFromSheet, 5000);
 </script>
-
+    
 </body>
 </html>
