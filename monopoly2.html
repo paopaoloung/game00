@@ -113,6 +113,15 @@
     <button class="btn-danger" onclick="handleAction('fine_or_buy')">罸款/買地 (純扣錢)</button>
 </div>
 
+
+<button id="nfcScanBtn" style="padding: 12px 24px; font-size: 16px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer;">
+  📡 感應 NFC 晶片
+</button>
+
+
+
+
+    
 <!-- 彈出視窗 (按鈕5) -->
 <div class="modal" id="success-modal">
     <div class="modal-content">
@@ -222,15 +231,12 @@
 
     fetchFromSheet();
     setInterval(fetchFromSheet, 5000);
-</script>
 
 
 
-<button id="nfcScanBtn" style="padding: 12px 24px; font-size: 16px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer;">
-  📡 感應 NFC 晶片
-</button>
 
-<script>
+    
+
 document.getElementById('nfcScanBtn').addEventListener('click', async () => {
   // 檢查瀏覽器是否支援 WebNFC
   if ('NDEFReader' in window) {
@@ -276,7 +282,12 @@ document.getElementById('nfcScanBtn').addEventListener('click', async () => {
     alert("您的瀏覽器或裝置不支援 WebNFC。(必須為 Android + Chrome 瀏覽器 + HTTPS 網站)");
   }
 });
+
+
+
+    
 </script>
+
 
 
 
